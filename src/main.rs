@@ -1,28 +1,25 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use std::error::Error;
+use std::fs::File;
+use std::path::Path;
 
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
+fn read_csv<P: AsRef<Path>>(filename: P) -> Result<(), Box<dyn Error>> {
+    use std::time::Instant;
+    let now = Instant::now();
+    let file = File::open(filename)?;
+    let mut rdr = csv::Reader::from_reader(file);
+
+    for result in rdr.records() {
+        let record = result?;
+        //println!("{:?}", record);
+    }
+    let elapsed = now.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
+
+    Ok(())
 }
 
-#[post("/echo")]
-async fn echo(req_body: String) -> impl Responder {
-    HttpResponse::Ok().body(req_body)
-}
-
-async fn manual_hello() -> impl Responder {
-    HttpResponse::Ok().body("Hey there!")
-}
-
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
-        App::new()
-            .service(hello)
-            .service(echo)
-            .route("/hey", web::get().to(manual_hello))
-    })
-    .bind(("127.0.0.1", 8080))?
-    .run()
-    .await
+fn main() -> Result<(), Box<dyn Error>> {
+    // let filename = "/home/sourav/Downloads/steam_reviews.csv";
+    let filename = "/home/sourav/Downloads/charts.csv";
+    read_csv(filename)
 }
