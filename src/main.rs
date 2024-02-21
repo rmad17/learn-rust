@@ -9,7 +9,7 @@ fn read_csv<P: AsRef<Path>>(filename: P) -> Result<(), Box<dyn Error>> {
     let mut rdr = csv::Reader::from_reader(file);
 
     for result in rdr.records() {
-        let record = result?;
+        // let record = result?;
         //println!("{:?}", record);
     }
     let elapsed = now.elapsed();
