@@ -1,25 +1,11 @@
-use std::error::Error;
-use std::fs::File;
-use std::path::Path;
+use axum::{routing::get, Router};
 
-fn read_csv<P: AsRef<Path>>(filename: P) -> Result<(), Box<dyn Error>> {
-    use std::time::Instant;
-    let now = Instant::now();
-    let file = File::open(filename)?;
-    let mut rdr = csv::Reader::from_reader(file);
+#[tokio::main]
+async fn main() {
+    // build our application with a single route
+    let app = Router::new().route("/", get(|| async { "Hello, World!" }));
 
-    for result in rdr.records() {
-        // let record = result?;
-        //println!("{:?}", record);
-    }
-    let elapsed = now.elapsed();
-    println!("Elapsed: {:.2?}", elapsed);
-
-    Ok(())
-}
-
-fn main() -> Result<(), Box<dyn Error>> {
-    // let filename = "/home/sourav/Downloads/steam_reviews.csv";
-    let filename = "/home/sourav/Downloads/charts.csv";
-    read_csv(filename)
+    // run our app with hyper, listening globally on port 3000
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
