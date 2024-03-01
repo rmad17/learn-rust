@@ -8,16 +8,37 @@ use tokio_cron_scheduler::{Job, JobScheduler, JobToRunAsync};
 #[tokio::main]
 async fn main() {
     // build our application with a single route
-    let mut sched = JobScheduler::new();
-    let job = Job::new("1/10 * * * * *", |_uuid, _lock| {
-        println!("I get executed every 10 seconds!")
-    });
-    sched.add(job).await;
+    let mut sched = JobScheduler::new().await?;
 
-    // Schedule your tasks as before...
+    // Add basic cron job
+    sched
+        .add(Job::new("1/10 * * * * *", |_uuid, _l| {
+            println!("I run every 10 seconds");
+        }))
+        .await;
 
-    // Start the scheduler
-    tokio::spawn(sched.start());
+    // Add async job
+    sched
+        .add(Job::new_async("1/7 * * * * *", |uuid, mut l| {
+            Box::pin(async move {
+                println!("I run async every 7 seconds");
+
+                // Query the next execution time for this job
+                let next_tick = l.next_tick_for_job(uuid).await;
+                match next_tick {
+                    Ok(Some(ts)) => println!("Next time for 7s job is {:?}", ts),
+                    _ => println!("Could not get next tick for 7s job"),
+                }
+            })
+        }))
+        .await;
+
+    // Add one-shot job with given duration
+    sched
+        .add(Job::new_one_shot(Duration::from_secs(18), |_uuid, _l| {
+            println!("I only run once");
+        }))
+        .await;
 
     let app = Router::new().route("/", get(|| async { "Hello, World!" }));
 
@@ -25,9 +46,6 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     // let _ = start();
     axum::serve(listener, app).await.unwrap();
-
-    // Ensure the scheduler is gracefully stopped when the server exits
-    scheduler_task.abort();
 }
 
 async fn my_scheduled_task() -> Result<(), Box<dyn std::error::Error>> {
