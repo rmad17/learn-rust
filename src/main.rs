@@ -1,6 +1,26 @@
+use std::error::Error;
+use std::fs::File;
+use std::path::Path;
+
 use axum::{routing::get, Router};
 use tokio;
 use tokio_cron_scheduler::{Job, JobScheduler, JobToRunAsync};
+
+
+fn read_csv<P: AsRef<Path>>(filename: P) -> Result<(), Box<dyn Error>> {
+    use std::time::Instant;
+    let now = Instant::now();
+    let file = File::open(filename)?;
+    let mut rdr = csv::Reader::from_reader(file);
+    println!("Now: {:.2?}", now);
+
+    for result in rdr.records() {
+        let record = result?;
+        // println!("{:?}", record);
+    }
+    let elapsed = now.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
+
 
 // mod cron;
 // use cron::start;
@@ -48,7 +68,13 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn my_scheduled_task() -> Result<(), Box<dyn std::error::Error>> {
+  
+fn main() -> Result<(), Box<dyn Error>> {
+    let filename = "/home/sourav/steam_reviews.csv";
+    read_csv(filename)
+}
+  
+  async fn my_scheduled_task() -> Result<(), Box<dyn std::error::Error>> {
     // Your task logic here
     println!("Task executed!");
     Ok(())
