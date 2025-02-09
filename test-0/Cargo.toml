@@ -1,0 +1,11 @@
+[package]
+name = "test-0"
+version = "0.1.0"
+authors = ["Sourav Basu <souravbasu17@gmail.com>"]
+license = "MIT"
+edition = "2021"
+
+[dependencies]
+color-eyre = "0.6.3"
+crossterm = "0.28.1"
+ratatui = "0.29.0"
